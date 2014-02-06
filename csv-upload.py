@@ -5,6 +5,7 @@ import csv
 import sys
 import os
 import subprocess
+import re
  
 base_location = os.environ['CKAN_INSTANCE'] + '/api'
 api_key = os.environ['CKAN_APIKEY']
@@ -26,12 +27,13 @@ class csv_package(object):
 	self.create_resource()
 
     def create_dataset_info(self):
-        self.dataset_name = raw_input("Name of dataset => ")
-        self.dataset_url = raw_input("Link set to source => ")
+	while self.dataset_name == '' or re.search(r'\W', self.dataset_name):
+            self.dataset_name = raw_input("Name of dataset => ")
+        while self.dataset_url == '' or re.search(r'\W', self.dataset_url):
+            self.dataset_url = raw_input("Link set to source => ")
         os.system('curl %s/3/action/package_create --data \'{"name":"%s"}\' -H Authorization:%s' % tuple([base_location, self.dataset_name, api_key]))
         self.locate_id()
         return self.dataset_name, self.dataset_url
-
 
     def locate_id(self):
         setinfo = os.popen('curl %s/3/action/package_show --data \'{"id":"%s"}\'' % tuple([base_location, self.dataset_name])).read()
@@ -39,7 +41,6 @@ class csv_package(object):
         end_int = setinfo[begin_int:].find(',')
         end_id = begin_int + end_int
         self.datastore_resource_id = setinfo[begin_int:end_id].split(': ')[1].strip('"')
-	print self.datastore_resource_id
         return self.datastore_resource_id
 
     def create_resource(self):
